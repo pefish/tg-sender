@@ -3,12 +3,13 @@ package tg_sender
 import (
 	"encoding/json"
 	"fmt"
-	go_http "github.com/pefish/go-http"
-	go_logger "github.com/pefish/go-logger"
-	"github.com/pkg/errors"
 	"net/url"
 	"sync"
 	"time"
+
+	go_http "github.com/pefish/go-http"
+	go_logger "github.com/pefish/go-logger"
+	"github.com/pkg/errors"
 )
 
 type MsgStruct struct {
@@ -21,17 +22,17 @@ type TgSender struct {
 	msgs        []MsgStruct
 	msgLock     sync.Mutex
 	msgReceived chan bool
-	token       string
+	botToken    string
 	logger      go_logger.InterfaceLogger
 
 	lastSend      map[string]time.Time
 	httpRequester go_http.IHttp
 }
 
-func NewTgSender(token string) *TgSender {
+func NewTgSender(botToken string) *TgSender {
 	ts := &TgSender{
 		msgs:          make([]MsgStruct, 0, 10),
-		token:         token,
+		botToken:      botToken,
 		logger:        go_logger.Logger,
 		msgReceived:   make(chan bool),
 		lastSend:      make(map[string]time.Time, 10),
@@ -57,10 +58,8 @@ func NewTgSender(token string) *TgSender {
 			ts.msgLock.Lock()
 			ts.msgs = make([]MsgStruct, 0, 10)
 			ts.msgLock.Unlock()
-			select {
-			case <-ts.msgReceived:
-				ts.logger.Debug("notify received")
-			}
+			<-ts.msgReceived
+			ts.logger.Debug("notify received")
 			ts.logger.Debug("to send...")
 		}
 	}()
@@ -79,7 +78,7 @@ func (ts *TgSender) SendMsg(msg MsgStruct, interval time.Duration) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if lastTime, ok := ts.lastSend[string(mar)]; ok && time.Now().Sub(lastTime) < interval {
+	if lastTime, ok := ts.lastSend[string(mar)]; ok && time.Since(lastTime) < interval {
 		return errors.New("trigger interval")
 	}
 	ts.lastSend[string(mar)] = time.Now()
@@ -106,7 +105,7 @@ func (ts *TgSender) send(chatId string, text string) error {
 	_, _, err := ts.httpRequester.GetForStruct(go_http.RequestParam{
 		Url: fmt.Sprintf(
 			"https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s",
-			ts.token,
+			ts.botToken,
 			chatId,
 			text,
 		),
