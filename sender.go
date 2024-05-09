@@ -102,6 +102,9 @@ func (ts *TgSender) send(chatId string, text string) error {
 		ErrorCode   uint64 `json:"error_code"`
 		Description string `json:"description"`
 	}
+	if len(text) > 4096 {
+		text = text[0:4093] + "..."
+	}
 	_, _, err := ts.httpRequester.GetForStruct(go_http.RequestParam{
 		Url: fmt.Sprintf(
 			"https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s",
