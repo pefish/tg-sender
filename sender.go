@@ -19,7 +19,7 @@ type MsgStruct struct {
 }
 
 type TgSender struct {
-	msgs        []MsgStruct
+	msgs        []*MsgStruct
 	msgLock     sync.Mutex
 	msgReceived chan bool
 	botToken    string
@@ -31,7 +31,7 @@ type TgSender struct {
 
 func NewTgSender(botToken string) *TgSender {
 	ts := &TgSender{
-		msgs:          make([]MsgStruct, 0, 10),
+		msgs:          make([]*MsgStruct, 0, 10),
 		botToken:      botToken,
 		logger:        go_logger.Logger,
 		msgReceived:   make(chan bool),
@@ -42,7 +42,7 @@ func NewTgSender(botToken string) *TgSender {
 	go func() {
 		for {
 			for _, msg := range ts.msgs {
-				go func(msg MsgStruct) {
+				go func(msg *MsgStruct) {
 					if msg.Ats != nil && len(msg.Ats) > 0 {
 						for _, at := range msg.Ats {
 							msg.Msg += " @" + at
@@ -56,7 +56,7 @@ func NewTgSender(botToken string) *TgSender {
 				}(msg)
 			}
 			ts.msgLock.Lock()
-			ts.msgs = make([]MsgStruct, 0, 10)
+			ts.msgs = make([]*MsgStruct, 0, 10)
 			ts.msgLock.Unlock()
 			<-ts.msgReceived
 			ts.logger.Debug("notify received")
@@ -73,7 +73,7 @@ func (ts *TgSender) SetLogger(logger go_logger.InterfaceLogger) *TgSender {
 }
 
 // interval: interval间隔内不发送
-func (ts *TgSender) SendMsg(msg MsgStruct, interval time.Duration) error {
+func (ts *TgSender) SendMsg(msg *MsgStruct, interval time.Duration) error {
 	mar, err := json.Marshal(msg)
 	if err != nil {
 		return errors.WithStack(err)
@@ -105,7 +105,7 @@ func (ts *TgSender) send(chatId string, text string) error {
 	if len(text) > 4096 {
 		text = text[0:4093] + "..."
 	}
-	_, _, err := ts.httpRequester.GetForStruct(go_http.RequestParam{
+	_, _, err := ts.httpRequester.GetForStruct(&go_http.RequestParams{
 		Url: fmt.Sprintf(
 			"https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s",
 			ts.botToken,

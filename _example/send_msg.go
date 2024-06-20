@@ -20,7 +20,7 @@ func main() {
 func do() error {
 	sender := tg_sender.NewTgSender("")
 
-	err := sender.SendMsg(tg_sender.MsgStruct{
+	err := sender.SendMsg(&tg_sender.MsgStruct{
 		ChatId: "",
 		Msg:    "test",
 	}, 0)
