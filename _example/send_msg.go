@@ -1,16 +1,16 @@
 package main
 
 import (
+	"log"
 	"time"
 
-	go_logger "github.com/pefish/go-logger"
 	tg_sender "github.com/pefish/tg-sender"
 )
 
 func main() {
 	err := do()
 	if err != nil {
-		go_logger.Logger.Error(err)
+		log.Fatal(err)
 		return
 	}
 
@@ -30,3 +30,5 @@ func do() error {
 
 	return nil
 }
+
+// go run ./_example/

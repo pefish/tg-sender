@@ -8,7 +8,7 @@ import (
 	"time"
 
 	go_http "github.com/pefish/go-http"
-	go_logger "github.com/pefish/go-logger"
+	i_logger "github.com/pefish/go-interface/i-logger"
 	"github.com/pkg/errors"
 )
 
@@ -23,7 +23,7 @@ type TgSender struct {
 	msgLock     sync.Mutex
 	msgReceived chan bool
 	botToken    string
-	logger      go_logger.InterfaceLogger
+	logger      i_logger.ILogger
 
 	lastSend      map[string]time.Time
 	httpRequester go_http.IHttp
@@ -31,13 +31,13 @@ type TgSender struct {
 
 func NewTgSender(botToken string) *TgSender {
 	ts := &TgSender{
-		msgs:          make([]*MsgStruct, 0, 10),
-		botToken:      botToken,
-		logger:        go_logger.Logger,
-		msgReceived:   make(chan bool),
-		lastSend:      make(map[string]time.Time, 10),
-		httpRequester: go_http.NewHttpRequester(go_http.WithLogger(go_logger.Logger), go_http.WithTimeout(20*time.Second)),
+		msgs:        make([]*MsgStruct, 0, 10),
+		botToken:    botToken,
+		logger:      &i_logger.DefaultLogger,
+		msgReceived: make(chan bool),
+		lastSend:    make(map[string]time.Time, 10),
 	}
+	ts.httpRequester = go_http.NewHttpRequester(go_http.WithLogger(ts.logger), go_http.WithTimeout(20*time.Second))
 
 	go func() {
 		for {
@@ -67,7 +67,7 @@ func NewTgSender(botToken string) *TgSender {
 	return ts
 }
 
-func (ts *TgSender) SetLogger(logger go_logger.InterfaceLogger) *TgSender {
+func (ts *TgSender) SetLogger(logger i_logger.ILogger) *TgSender {
 	ts.logger = logger
 	return ts
 }
