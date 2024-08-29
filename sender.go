@@ -29,11 +29,11 @@ type TgSender struct {
 	httpRequester go_http.IHttp
 }
 
-func NewTgSender(botToken string) *TgSender {
+func NewTgSender(logger i_logger.ILogger, botToken string) *TgSender {
 	ts := &TgSender{
 		msgs:        make([]*MsgStruct, 0, 10),
 		botToken:    botToken,
-		logger:      &i_logger.DefaultLogger,
+		logger:      logger,
 		msgReceived: make(chan bool),
 		lastSend:    make(map[string]time.Time, 10),
 	}
@@ -64,11 +64,6 @@ func NewTgSender(botToken string) *TgSender {
 		}
 	}()
 
-	return ts
-}
-
-func (ts *TgSender) SetLogger(logger i_logger.ILogger) *TgSender {
-	ts.logger = logger
 	return ts
 }
 
