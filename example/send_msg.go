@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	i_logger "github.com/pefish/go-interface/i-logger"
 	tg_sender "github.com/pefish/tg-sender"
 )
 
@@ -18,7 +19,7 @@ func main() {
 }
 
 func do() error {
-	sender := tg_sender.NewTgSender("")
+	sender := tg_sender.NewTgSender(&i_logger.DefaultLogger, "")
 
 	err := sender.SendMsg(&tg_sender.MsgStruct{
 		ChatId: "",

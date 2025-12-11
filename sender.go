@@ -25,8 +25,7 @@ type TgSender struct {
 	botToken    string
 	logger      i_logger.ILogger
 
-	lastSend      map[string]time.Time
-	httpRequester go_http.IHttp
+	lastSend map[string]time.Time
 }
 
 func NewTgSender(logger i_logger.ILogger, botToken string) *TgSender {
@@ -37,7 +36,6 @@ func NewTgSender(logger i_logger.ILogger, botToken string) *TgSender {
 		msgReceived: make(chan bool),
 		lastSend:    make(map[string]time.Time, 10),
 	}
-	ts.httpRequester = go_http.NewHttpRequester(go_http.WithLogger(ts.logger), go_http.WithTimeout(20*time.Second))
 
 	go func() {
 		for {
@@ -100,14 +98,16 @@ func (ts *TgSender) send(chatId string, text string) error {
 	if len(text) > 4096 {
 		text = text[0:4093] + "..."
 	}
-	_, _, err := ts.httpRequester.GetForStruct(&go_http.RequestParams{
-		Url: fmt.Sprintf(
-			"https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s",
-			ts.botToken,
-			chatId,
-			text,
-		),
-	}, &sendMessageResult)
+	_, _, err := go_http.HttpInstance.GetForStruct(
+		ts.logger,
+		&go_http.RequestParams{
+			Url: fmt.Sprintf(
+				"https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s",
+				ts.botToken,
+				chatId,
+				text,
+			),
+		}, &sendMessageResult)
 	if err != nil {
 		return errors.WithStack(err)
 	}
